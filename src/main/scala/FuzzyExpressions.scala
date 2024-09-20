@@ -26,9 +26,10 @@ object FuzzyExpressions:
         case FuzzyIntersection(set1: FuzzySet, set2: FuzzySet)
 
         // Assignment and Scoping
-        case Assign(s: String, e: FuzzyExpression)
+        case Assign(s: FuzzyExpression, e: FuzzyExpression)
         case Scope(s: String, e: FuzzyExpression)
         case FuzzyGate(s: String)
+        case LogicGate(s: String)
 
         // Test Gate with an Expected Value
         case TestGate(s: String, e: FuzzyExpression)
