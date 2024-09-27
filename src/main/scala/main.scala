@@ -96,10 +96,12 @@ def main(): Unit = {
 
   // Trying to test the composite gate without defining C
   try {
-    val testCompositeGate = TestGate("compositeGate", FuzzyVal(0.2))
+    val testCompositeGate = TestGate("compositeGate", FuzzyVar("A", FuzzyVal(0.5)))
     val testCompositeGateResult = eval(testCompositeGate, commonEnv,commonEnv)
     println(s"TestCompositeGate result: $testCompositeGateResult")
   } catch {
     case e: Exception => println(s"Error during composite gate test: ${e.getMessage}")
   }
+
+  commonEnv.printEnvironment()
 }
