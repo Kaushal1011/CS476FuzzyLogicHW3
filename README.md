@@ -9,7 +9,7 @@ This project implements a **Fuzzy Logic System** in **Scala** using the concepts
 This system introduces a statically scoped environment for fuzzy expressions. Variables defined within certain scopes retain their bindings and can be referenced according to scope rules. This is analogous to scoping mechanisms in modern programming languages, providing users with control over variable assignments and function-like constructs (logic gates).
 
 ### Key Features:
-- **Fuzzy Values & Fuzzy Sets**: Supports operations on single values (e.g., `FuzzyVal(0.5)`) and sets of values (e.g., `FuzzySet(List("A" -> FuzzyVal(0.5), "B" -> FuzzyVal(0.3)))`).
+- **Fuzzy Values & Fuzzy Sets**: Supports operations on single values (e.g., `FuzzyVal(0.5)`) and sets of values (e.g., `FuzzySet(List(("A", FuzzyVal(0.2)), ("B", FuzzyVal(0.3)), ("C", FuzzyVal(0.4))))`).
 - **Mathematical Operations**: Performs operations like addition, multiplication, and logical operations (`AND`, `OR`, `XOR`) on fuzzy values and sets.
 - **Statically Scoped Variables**: Assign variables within a specific scope, allowing controlled visibility and use of variables across different scopes.
 - **Logic Gates as Function Constructs**: Logic gates behave like functions, evaluating fuzzy expressions based on inputs and scoped variables.
