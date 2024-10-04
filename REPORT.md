@@ -148,8 +148,8 @@ Expressions in the DSL are evaluated recursively, respecting the statically scop
    ```scala
    val gateExpr = Assign(FuzzyGate("gate1"), FuzzyAnd(FuzzyVar("A"), FuzzyVar("B")))
    evaluate(gateExpr, env, env)
-   val testGate = TestGate("gate1", List(Assign(FuzzyVar("A"), FuzzyVal(0.7)), Assign(FuzzyVar("B"), FuzzyVal(0.8))))
-   val result = evaluate(testGate, env, env) // FuzzyVal(0.7)
+   val testGate = TestGate("gate1", FuzzyVal(0.7))
+   val result = evaluate(testGate, env, env) 
    ```
 
 ---
@@ -247,10 +247,70 @@ The system's architecture comprises several key components, structured to facili
 
 ---
 
+## Examples and Use Cases
+
+### Variable Assignment and Fetching
+
+Assign a variable and retrieve its value:
+
+```scala
+val assignVar = Assign(FuzzyVar("X"), FuzzyVal(0.9))
+evaluate(assignVar, env, env)
+
+val fetchVar = FuzzyVar("X")
+val result = evaluate(fetchVar, env, env) // Result: FuzzyVal(0.9)
+```
+
+### Logic Gate Assignment and Testing
+
+Define a logic gate and test it with inputs:
+
+```scala
+val logicGateExpr = Assign(FuzzyGate("gate1"), FuzzyAdd(FuzzyVar("A"), FuzzyVar("B")))
+evaluate(logicGateExpr, env, env)
+
+val testGateExpr = TestGate("gate1", FuzzyVal(0.5)) 
+val result = evaluate(testGateExpr, env, env) // Result: FuzzyVal(0.9)
+```
+
+### Scoped Variables within Logic Gates
+
+Variables within logic gates are scoped, preventing conflicts:
+
+```scala
+val logicGate1 = Assign(FuzzyGate("gate1"), FuzzyMult(FuzzyVar("A"), FuzzyVar("B")))
+val scopeGate1 = Scope("gate1", Assign(FuzzyVar("A"), FuzzyVal(0.2)))
+val scopeGate2 = Scope("gate1", Assign(FuzzyVar("B"), FuzzyVal(0.5)))
+evaluate(scopeGate1, env, env)
+evaluate(scopeGate2, env, env)
+evaluate(logicGate1, env, env)
+val result = evaluate(LogicGate("gate1"), env, env) // Result: FuzzyVal(0.1)
+```
+
+### Composite Logic Gates
+
+Compose logic gates to build complex expressions:
+
+```scala
+val logicGate1 = Assign(FuzzyGate("gate1"), FuzzyAnd(FuzzyVar("X"), FuzzyVar("Y")))
+val logicGate2 = Assign(FuzzyGate("gate2"), FuzzyOr(LogicGate("gate1"), FuzzyVar("Z")))
+val scopeX = Scope("gate1", Assign(FuzzyVar("X"), FuzzyVal(0.6)))
+val scopeY = Scope("gate1", Assign(FuzzyVar("Y"), FuzzyVal(0.7)))
+val scopeZ = Scope("gate2", Assign(FuzzyVar("Z"), FuzzyVal(0.8)))
+evaluate(scopeX, env, env)
+evaluate(scopeY, env, env)
+evaluate(scopeZ, env, env)
+evaluate(logicGate1, env, env)
+evaluate(logicGate2, env, env)
+
+val testGate = TestGate("gate2", FuzzyVal(0.5))
+val result = evaluate(testGate, env, env) // Result: FuzzyVal(0.5)
+```
+
+---
+
 ## References
 
 - [Fuzzy Logic Principles](https://en.wikipedia.org/wiki/Fuzzy_logic)
 - [Scala Programming Language](https://www.scala-lang.org/)
-- [Domain-Specific Languages](https://martinfowler.com/books/dsl.html)
-
 ---
