@@ -4,6 +4,10 @@
 
 This project implements a **Fuzzy Logic System** in **Scala** using the concepts of fuzzy mathematics, variable scoping, and logic gates. It is designed from the perspective of programming language design, focusing on statically scoped environments. The system allows users to define and evaluate expressions involving fuzzy sets, fuzzy logic gates, and mathematical operations. It supports variable assignment, scoping, and testing logic gates with inputs, making it versatile for building logic-based systems.
 
+## [Report](REPORT.md)
+
+The detailed report provides an in-depth analysis of the DSL, including its purpose, design, syntax, types, and features. It covers the motivation behind the DSL, its language overview, design considerations.
+
 ## Project Overview
 
 This system introduces a statically scoped environment for fuzzy expressions. Variables defined within certain scopes retain their bindings and can be referenced according to scope rules. This is analogous to scoping mechanisms in modern programming languages, providing users with control over variable assignments and function-like constructs (logic gates).

@@ -13,6 +13,7 @@ class FuzzyMathSetTests extends AnyFunSuite {
       FuzzySet(List(("A", FuzzyVal(0.5)), ("B", FuzzyVal(0.3)))),
       FuzzySet(List(("A", FuzzyVal(0.2)), ("B", FuzzyVal(0.3)), ("C", FuzzyVal(0.4))))
     )
+    val a:Option[Int] = None
     val result = eval(expr, commonEnv, commonEnv)
 
     assert(result == FuzzySet(List(("A", FuzzyVal(0.7)), ("B", FuzzyVal(0.6)), ("C", FuzzyVal(0.4)))))
