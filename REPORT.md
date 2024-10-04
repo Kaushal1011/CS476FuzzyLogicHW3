@@ -211,10 +211,8 @@ The system's architecture comprises several key components, structured to facili
 ### Type Interactions
 
 - **Operations on FuzzyVal and FuzzySet**:
-
-    - Operations are defined for combinations of `FuzzyVal` and `FuzzySet`.
-    - When mixing types, the operation is applied element-wise if one operand is a set.
-
+    - Operation is defined for combinations of `FuzzyVal` and `FuzzySet` (AlphaCut).
+     
 - **No Implicit Type Conversion**:
 
     - The DSL does not perform implicit type coercion.
