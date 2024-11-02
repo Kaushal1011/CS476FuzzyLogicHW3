@@ -19,10 +19,10 @@ def main(): Unit = {
   val baseClass = CreateClass(
     "Base",
     None,
-    List(ClassVar("v1", VarType("int"))), // Declare an integer variable v1
+    List(ClassVar("v1", VarType("Integer"))), // Declare an integer variable v1
     List(MethodDef(
       "m1",
-      List(Parameter("p1", ParamType("int"))), // Single parameter method
+      List(Parameter("p1", ParamType("Integer"))), // Single parameter method
       List(
         NonFuzzyAssign("v1", NonFuzzyType(10)), // Assign to non-fuzzy var
         FuzzyAdd(FuzzyVal(0.5), FuzzyVal(0.7)) // Perform a fuzzy addition
@@ -44,17 +44,17 @@ def main(): Unit = {
   val macroResult = eval(useMacroExpr, commonEnv, commonEnv)
   println(s"Result of using 'macroExample' macro in expression: $macroResult")
 
-  val addition = (args: Seq[Any]) => args(0).asInstanceOf[Int] + args(1).asInstanceOf[Int]
+  val addition = (args: Seq[Any]) => args(0).asInstanceOf[Integer] + args(1).asInstanceOf[Integer]
 
   // Define a Derived class extending Base with an additional method
   val derivedClass = CreateClass(
     "Derived",
     Some("Base"), // Extends Base class
-    List(ClassVar("v2", VarType("string"))), // Add string variable v2
+    List(ClassVar("v2", VarType("String"))), // Add string variable v2
     List(
       MethodDef(
         "m2",
-        List(Parameter("p2", ParamType("string"))),
+        List(Parameter("p2", ParamType("String"))),
         List(
           NonFuzzyAssign("v2", NonFuzzyType("hello")), // Assign a non-fuzzy string
           FuzzyMult(FuzzyVal(2.0), FuzzyVal(3.0)) // Perform a fuzzy multiplication
@@ -62,7 +62,7 @@ def main(): Unit = {
       ),
       MethodDef(
         "m3",
-        List(Parameter("p3", ParamType("int"))), // Second method with an int parameter
+        List(Parameter("p3", ParamType("Integer"))), // Second method with an int parameter
         List(
           FuzzyAnd(FuzzyVal(0.8), FuzzyVal(0.9)), // Perform a fuzzy AND
           NonFuzzyAssign("v1", NonFuzzyType(50)) // Override variable v1 in derived class
@@ -70,7 +70,7 @@ def main(): Unit = {
       ),
       MethodDef(
         "m5",
-        List(Parameter("p5", ParamType("int"))),
+        List(Parameter("p5", ParamType("Integer"))),
         List(
           NonFuzzyAssign("v1", NonFuzzyType(100)),
           NonFuzzyAssign("v2", NonFuzzyOperation(List(NonFuzzyType(10), NonFuzzyVar("p5")), addition))

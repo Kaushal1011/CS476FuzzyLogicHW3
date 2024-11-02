@@ -150,6 +150,14 @@ object FuzzyEvaluator:
         // Bind method parameters in the new environment
         methodDef.parameters.zip(args).foreach { case (param, (argName, argExpr)) =>
           val evaluatedArg = eval(argExpr, env, root)
+          val paramType = param.paramType.name
+          println(evaluatedArg.getClass.getSimpleName)
+          if evaluatedArg.getClass.getSimpleName == "NonFuzzyType" then
+            if paramType!="Any" && evaluatedArg.asInstanceOf[NonFuzzyType[_]].value.getClass.getSimpleName != paramType then
+              throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType got ${evaluatedArg.asInstanceOf[NonFuzzyType[_]].value.getClass.getSimpleName}")
+          else if paramType!="Any" && evaluatedArg.getClass.getSimpleName != paramType then
+            throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType")
+
           methodEnv.setVariable(param.name, evaluatedArg)
         }
 
