@@ -51,14 +51,14 @@ object FuzzyEvaluator:
       case NonFuzzyAssign(name: String, value: NonFuzzyType[?]) =>
         try
           env.setVariable(name, value)
-          value
+          eval(value, env, root)
         catch
           case e: Exception => throw new Exception(s"Error in assigning NonFuzzyType: ${e.getMessage}")
 
       case NonFuzzyAssign(name: String, value: NonFuzzyOperation) =>
         try
           env.setVariable(name, eval(value, env, root))
-          value
+          eval(value, env, root)
         catch
           case e: Exception => throw new Exception(s"Error in assigning NonFuzzyOperation: ${e.getMessage}")
 
@@ -165,7 +165,10 @@ object FuzzyEvaluator:
         methodDef.body match
           case singleExpr: FuzzyExpression => eval(singleExpr, methodEnv, root)
           case exprList: List[FuzzyExpression] =>
-            exprList.map(eval(_, methodEnv, root)).last
+            val invoked = exprList.map(eval(_, methodEnv, root))
+//            println(exprList)
+//            println(s"Method $methodName invoked with result: $invoked")
+            invoked.last
 
       case NonFuzzyOperation(p, fun) =>
         val args = p.map {
@@ -182,7 +185,7 @@ object FuzzyEvaluator:
             }
           case nonFuzzyValue => nonFuzzyValue // Non-fuzzy values remain as they are
         }
-        NonFuzzyType(fun(args))
+        NonFuzzyType(fun.apply(args))
 
       case Macro(name) =>
         eval(env.lookupMacro(name).getOrElse(throw new Exception(s"Macro $name not defined")), env, root)

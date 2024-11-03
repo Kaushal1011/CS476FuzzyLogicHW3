@@ -1,23 +1,14 @@
-### README
+# Fuzzy Logic System with Classes, Macros, and Scoped Variables
 
-# Fuzzy Logic System with Scoped Variables and Logic Gates
+This project builds a **Fuzzy Logic System** in **Scala** that supports classes, macros, and scoped variables for defining and evaluating fuzzy logic expressions. It allows the creation of classes with methods that include both fuzzy and non-fuzzy operations, as well as macros that can be reused in expressions. The system also includes statically scoped variables and logic gates, supporting complex logic-based structures and encapsulated class methods.
 
-This project implements a **Fuzzy Logic System** in **Scala** using the concepts of fuzzy mathematics, variable scoping, and logic gates. It is designed from the perspective of programming language design, focusing on statically scoped environments. The system allows users to define and evaluate expressions involving fuzzy sets, fuzzy logic gates, and mathematical operations. It supports variable assignment, scoping, and testing logic gates with inputs, making it versatile for building logic-based systems.
+## [Detailed Report Fuzzy Logic](REPORT.md)
 
-## [Report](REPORT.md)
-
-The detailed report provides an in-depth analysis of the DSL, including its purpose, design, syntax, types, and features. It covers the motivation behind the DSL, its language overview, design considerations.
+## [Old Readme](README_FuzzyLogic.md)
 
 ## Project Overview
 
-This system introduces a statically scoped environment for fuzzy expressions. Variables defined within certain scopes retain their bindings and can be referenced according to scope rules. This is analogous to scoping mechanisms in modern programming languages, providing users with control over variable assignments and function-like constructs (logic gates).
-
-### Key Features:
-- **Fuzzy Values & Fuzzy Sets**: Supports operations on single values (e.g., `FuzzyVal(0.5)`) and sets of values (e.g., `FuzzySet(List(("A", FuzzyVal(0.2)), ("B", FuzzyVal(0.3)), ("C", FuzzyVal(0.4))))`).
-- **Mathematical Operations**: Performs operations like addition, multiplication, and logical operations (`AND`, `OR`, `XOR`) on fuzzy values and sets.
-- **Statically Scoped Variables**: Assign variables within a specific scope, allowing controlled visibility and use of variables across different scopes.
-- **Logic Gates as Function Constructs**: Logic gates behave like functions, evaluating fuzzy expressions based on inputs and scoped variables.
-- **Testable Gates**: Test gates by providing specific inputs and evaluating their results based on scoped variables and fuzzy logic.
+This system is built with modularity in mind, providing powerful tools to manage variables, classes, instances, methods, and macros within scoped environments. It supports fuzzy and non-fuzzy operations, including arithmetic and logical gates, with statically scoped variables that maintain context-specific assignments.
 
 ## Prerequisites
 
@@ -29,7 +20,7 @@ This system introduces a statically scoped environment for fuzzy expressions. Va
 ### Clone the Repository
 
 ```sh
-https://github.com/Kaushal1011/CS476FuzzyLogicHW1
+git clone https://github.com/Kaushal1011/CS476FuzzyLogicHW1
 cd CS476FuzzyLogicHW1
 ```
 
@@ -51,187 +42,119 @@ sbt run
 sbt test
 ```
 
-## Project Structure
 
-- `src/main/scala`: Contains the main source code.
-- `src/test/scala`: Contains test cases for different components of the system.
-- `FuzzyEvaluator.scala`: Core evaluation logic for fuzzy expressions and gates.
-- `FuzzyExpressions.scala`: Defines fuzzy expression types (values, sets, operations).
-- `EnvironmentScopes.scala`: Implements the statically scoped environment.
-- `FuzzyMath.scala`: Implements the mathematical operations on fuzzy values and sets.
+### Key Features
 
-## Language Tokens (Expressions)
+- **Class Definitions**: Define classes with variables and methods that support fuzzy and non-fuzzy operations. Classes can also inherit from other classes, extending functionality.
 
-The system defines a set of language tokens (or expressions) for operations and scoping constructs.
+- **Method Invocation**: Invoke methods on class instances, including inherited methods from parent classes. This allows for method reuse and polymorphism.
 
-### Fuzzy Values and Sets
+- **Fuzzy Logic Operations**: Perform fuzzy operations like addition, multiplication, AND, OR, and XOR within methods, enabling complex decision-making logic in class definitions.
 
-- **FuzzyVal**: Represents a fuzzy value, e.g., `FuzzyVal(0.7)`.
-- **FuzzySet**: Represents a set of fuzzy values associated with labels, e.g., `FuzzySet(List(("A", FuzzyVal(0.5)), ("B", FuzzyVal(0.3))))`.
+- **Macros**: Define and use reusable expressions with macros, which can be incorporated into other expressions and reused across methods.
 
-### Basic Arithmetic & Logic Operations
+- **Scoped Variables**: Use `Let` constructs to create local scopes for variables, preserving isolation and ensuring controlled access to variables.
 
-- **FuzzyAdd**: Adds two fuzzy values or sets, capping the result at 1.0.
-- **FuzzyMult**: Multiplies two fuzzy values or sets.
-- **FuzzyAnd**: Computes the minimum of two fuzzy values.
-- **FuzzyOr**: Computes the maximum of two fuzzy values.
-- **FuzzyXor**: Computes the difference between the maximum and minimum of two fuzzy values.
+- **Non-Fuzzy Operations**: Support non-fuzzy arithmetic and assignment within methods, with customizable non-fuzzy operations such as integer addition and string concatenation.
 
-### Advanced Operations
+- **Environment Management**: Manage classes, instances, methods, and macros within dynamically scoped environments, tracking variable states and evaluating expressions according to static scoping rules.
 
-- **FuzzyAlphaCut**: Extracts elements from a fuzzy set with membership values greater than or equal to a specific threshold (alpha).
-- **FuzzyUnion**: Computes the union (maximum membership) of two fuzzy sets.
-- **FuzzyIntersection**: Computes the intersection (minimum membership) of two fuzzy sets.
+## New Features and Expanded Test Coverage
 
-## Variable Assignment and Scoping
+The following sections highlight the key features demonstrated by new test cases, illustrating how the system supports classes, macros, and logic gates.
 
-### Assign
+### Class Definitions and Inheritance
 
-- **Assign**: Assigns a fuzzy value to a variable. In statically scoped environments, variables maintain their values within their scope.
+Classes can be defined with variables and methods. The system supports inheritance, allowing derived classes to extend base class functionality.
 
-```scala
-val assignVar = Assign(FuzzyVar("X"), FuzzyVal(0.9))
-val result = eval(assignVar, env, env)
-```
+- **Example**:
+  ```scala
+  val baseClass = CreateClass(
+    "Base",
+    None,
+    List(ClassVar("v1", VarType("Integer"))),
+    List(MethodDef(
+      "m1",
+      List(Parameter("p1", ParamType("Integer"))),
+      List(NonFuzzyAssign("v1", NonFuzzyType(10)))
+    ))
+  )
 
-### Scope
+  val derivedClass = CreateClass(
+    "Derived",
+    Some("Base"),
+    List(ClassVar("v2", VarType("String"))),
+    List(MethodDef("m2", List(Parameter("p2", ParamType("String"))), List(NonFuzzyAssign("v2", NonFuzzyType("hello")))))
+  )
+  ```
 
-- **Scope**: Defines a new scope for a variable assignment. Variables assigned within a scope remain local to that scope and do not affect parent scopes.
+### Method Invocation
 
-```scala
-val scopeExpr = Scope("gateScope", Assign(FuzzyVar("A"), FuzzyVal(0.2)))
-```
+Methods within classes can be invoked on instances, supporting both fuzzy and non-fuzzy operations. Inherited methods from a base class can also be called on derived instances.
 
-### Example:
+- **Example**:
+  ```scala
+  val createInstanceExpr = CreateInstance("Derived")
+  eval(createInstanceExpr, commonEnv, commonEnv)
 
-```scala
-val commonEnv = new Environment(Some("GlobalScope"), mutable.Map.empty)
-val assignVar = Assign(FuzzyVar("X"), FuzzyVal(0.9))
-val resultVarAssign = eval(assignVar, commonEnv, commonEnv)
-val scopeExpr = Scope("Scope1", Assign(FuzzyVar("A"), FuzzyVal(0.5)))
-eval(scopeExpr, commonEnv, commonEnv)
-```
+  val invokeMethodExpr = InvokeMethod("Derived", "m1", List(("p1", NonFuzzyType(5))))
+  val methodResult = eval(invokeMethodExpr, commonEnv, commonEnv)
+  assert(methodResult == NonFuzzyType(10))
+  ```
 
-## Logic Gates
+### Fuzzy Logic in Methods
 
-### LogicGate
+The system supports fuzzy operations like addition, multiplication, AND, OR, and XOR. These operations are evaluated within the methods of a class and provide flexibility in decision-making.
 
-A **LogicGate** is a function construct that can be assigned to expressions and evaluated using the scoped environment. Logic gates allow the composition of fuzzy logic expressions.
+- **Example**:
+  ```scala
+  val invokeMethodExpr = InvokeMethod("Derived", "m2", List(("p2", NonFuzzyType("world"))))
+  val methodResult = eval(invokeMethodExpr, commonEnv, commonEnv)
+  ```
 
-### FuzzyGate Assignment
+### Macros for Reusable Expressions
 
-Logic gates are assigned fuzzy expressions and can reference variables within their scope. A gate acts like a function that can evaluate expressions based on the current variable assignments.
+Macros can be defined for fuzzy expressions and then reused within other expressions or methods. This modularity allows complex expressions to be defined once and used multiple times.
 
-```scala
-val logicGateExpr = Assign(FuzzyGate("logicGate1"), FuzzyAdd(FuzzyVal(0.5), FuzzyVal(0.3)))
-val resultGate = eval(logicGateExpr, commonEnv, commonEnv)
-```
+- **Example**:
+  ```scala
+  val defineMacroExpr = DefineMacro("macroExample", FuzzyAdd(FuzzyVal(0.3), FuzzyVal(0.2)))
+  eval(defineMacroExpr, commonEnv, commonEnv)
 
-### Composite Gates
+  val useMacroExpr = FuzzyAdd(Macro("macroExample"), FuzzyVal(0.5))
+  val result = eval(useMacroExpr, commonEnv, commonEnv)
+  assert(result == FuzzyVal(1.0)) // 0.3 + 0.2 + 0.5, capped at 1.0
+  ```
 
-Logic gates can be composed together. For example, a composite gate might involve operations between two logic gates or between a logic gate and a fuzzy variable.
+### Scoped Variables with `Let` Constructs
 
-```scala
-val compositeGateExpr = Assign(FuzzyGate("compositeGate"), FuzzyXor(LogicGate("logicGate1"), FuzzyVar("C")))
-val resultCompositeGate = eval(compositeGateExpr, commonEnv, commonEnv)
-```
+Variables can be assigned within a `Let` scope, providing a localized environment for evaluations. These scoped variables are used in nested expressions without affecting the outer scope.
 
-### Testing Logic Gates
+- **Example**:
+  ```scala
+  val letExpr = Let(
+    List(
+      Assign(FuzzyVar("temp"), FuzzyAdd(FuzzyVal(0.6), FuzzyVal(0.4))),
+      Assign(FuzzyVar("result"), FuzzyMult(Macro("macroExample"), FuzzyVar("temp")))
+    ),
+    FuzzyAdd(FuzzyVar("result"), FuzzyVal(0.1))
+  )
+  ```
 
-You can test logic gates with specific inputs using the **TestGate** expression.
+### Non-Fuzzy Operations
 
-```scala
-val testGateExpr = TestGate("logicGate1", FuzzyVal(0.5))
-val resultTestGate = eval(testGateExpr, commonEnv, commonEnv)
-```
+The system also supports non-fuzzy operations such as integer addition and string concatenation, allowing for flexible handling of non-fuzzy types within classes and expressions.
 
-## Examples
+- **Example**:
+  ```scala
+  val addition = (args: Seq[Any]) => args(0).asInstanceOf[Integer] + args(1).asInstanceOf[Integer]
+  val assignVar = NonFuzzyAssign("X", NonFuzzyOperation(List(NonFuzzyType(3), NonFuzzyType(3)), addition))
+  ```
 
-### Variable Assignment and Fetching
 
-```scala
-val assignVar = Assign(FuzzyVar("X"), FuzzyVal(0.9))
-eval(assignVar, commonEnv, commonEnv)
+## Tests For Classes, Methods, Macros, and Let Scopes
 
-val fetchVar = FuzzyVar("X")
-val resultVar = eval(fetchVar, commonEnv, commonEnv)
-println(s"Variable X: $resultVar")
-```
-
-### Logic Gate Assignment
-
-```scala
-val logicGateExpr = Assign(FuzzyGate("gate1"), FuzzyAdd(FuzzyVal(0.2), FuzzyVal(0.3)))
-val resultGate = eval(logicGateExpr, commonEnv, commonEnv)
-println(s"LogicGate gate1: $resultGate")
-```
-
-### Composite Logic Gate
-
-```scala
-val compositeGateExpr = Assign(FuzzyGate("compositeGate"), FuzzyXor(LogicGate("gate1"), FuzzyVal(0.5)))
-val resultCompositeGate = eval(compositeGateExpr, commonEnv, commonEnv)
-println(s"Composite Gate: $resultCompositeGate")
-```
-
-## Logic Gates as Functions
-
-Logic gates in this system behave as reusable functions. You can assign an expression to a gate, and this gate can be referenced or composed with other gates or variables in different scopes.
-
-### Scoping within Logic Gates
-
-Variables within logic gates are scoped. For example, variables `A` and `B` assigned in one gate will not conflict with variables in another gate, unless intentionally shared through the parent scope.
-
-```scala
-val logicGate1 = Assign(FuzzyGate("gate1"), FuzzyMult(FuzzyVar("A"), FuzzyVar("B")))
-val scopeGate1 = Scope("gate1", Assign(FuzzyVar("A"), FuzzyVal(0.2)))
-val scopeGate2 = Scope("gate1", Assign(FuzzyVar("B"), FuzzyVal(0.5)))
-val result = eval(LogicGate("gate1"), commonEnv, commonEnv)
-println(s"Gate1 result: $result")
-```
-
-Here are the key features demonstrated in the system with brief explanations and corresponding code snippets from the test files:
-
-1. **Statically Scoped Environment**
-    - Variables are looked up in the current scope or parent scope.
-    - **Example**:
-   ```scala
-   val assignVar = Assign(FuzzyGate("Gate1"), FuzzyAnd(FuzzyMult(FuzzyAdd(FuzzyVal(0.1), FuzzyVar("X")), Assign(FuzzyVar("X"), FuzzyVal(0.3))), FuzzyVar("X")))
-   val parentX = Assign(FuzzyVar("X"), FuzzyVal(0.1))
-   ```
-    - This ensures that variables like `X` in different scopes are resolved properly based on static scoping rules.
-
-2. **Nesting of Assignments**
-    - Allows variable assignments inside complex expressions.
-    - **Example**:
-   ```scala
-   val assignVar = Assign(FuzzyGate("Gate1"), FuzzyMult(FuzzyAdd(FuzzyVal(0.5), Assign(FuzzyVar("X"), FuzzyVal(0.3))),FuzzyVar("X")))
-   ```
-    - This demonstrates how assignments like `FuzzyVar("X")` can be nested within other operations, providing modular and dynamic assignments.
-
-3. **Logic Gates as First-Class Constructs**
-    - Logic gates are treated as reusable functional constructs.
-    - **Example**:
-   ```scala
-   val logicGateExpr = Assign(FuzzyGate("logicGate1"), FuzzyAdd(FuzzyMult(FuzzyVar("A", FuzzyVal(0.1)), FuzzyVar("B", FuzzyVal(0.2))), FuzzyVal(0.1)))
-   ```
-    - Gates like `logicGate1` can be reused across multiple evaluations with different inputs, allowing modular design.
-
-4. **Composite Logic Gates**
-    - Logic gates can be combined into larger, more complex gates.
-    - **Example**:
-   ```scala
-   val compositeGateExpr = Assign(FuzzyGate("compositeGate"), FuzzyXor(LogicGate("logicGate1"), FuzzyVar("C")))
-   ```
-    - This combines logic gate `logicGate1` and a variable `C` into a composite gate, demonstrating modularity.
-
-5. **Error Handling for Missing Inputs**
-    - Throws an exception if a required variable is not defined.
-    - **Example**:
-   ```scala
-   assertThrows[Exception] {
-     val testCompositeGate = TestGate("compositeGate", FuzzyVar("A", FuzzyVal(0.5)))
-   }
-   ```
-    - This ensures that logic gates are not evaluated with missing inputs, promoting robustness in the system.
+- [**Class and Method Tests**](src/test/scala/FuzzyClassTests.scala): Test cases for class definitions
+- [**Macro Tests**](src/test/scala/MacroTests.scala): Test cases for macro definitions and usage
+- [**Non-Fuzzy Operation Tests**](src/test/scala/NonFuzzyTests.scala): Test cases for non-fuzzy operations
 
