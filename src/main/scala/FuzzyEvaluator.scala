@@ -22,7 +22,8 @@ object FuzzyEvaluator:
           case name: String =>
             env.lookup(name) match
               case Some(foundVar) => eval(foundVar, env, root) // Evaluate the found variable
-              case None => throw new Exception(s"Variable $name not defined in scope ${env.name}")
+              case None => FuzzyVar(name) // Return the variable name if not found for later evaluation
+//                throw new Exception(s"Variable $name not defined in scope ${env.name}")
 
       // NonFuzzyVar logic: Fetch value from environment or error if not found
       case NonFuzzyVar(v) =>
@@ -34,18 +35,75 @@ object FuzzyEvaluator:
           case name: String =>
             env.lookup(name) match
               case Some(foundVar) => eval(foundVar, env, root) // Evaluate the found variable
-              case None => throw new Exception(s"Non-fuzzy variable $name not defined in scope ${env.name}")
+              case None => NonFuzzyVar(name) // Return the variable name if not found for later evaluation
+//                throw new Exception(s"Non-fuzzy variable $name not defined in scope ${env.name}")
 
       // Arithmetic operations for Fuzzy types
-      case FuzzyAdd(x1, x2) => FuzzyVal(eval(x1, env, root).asInstanceOf[FuzzyVal].i + eval(x2, env, root).asInstanceOf[FuzzyVal].i)
-      case FuzzyMult(x1, x2) => FuzzyVal(eval(x1, env, root).asInstanceOf[FuzzyVal].i * eval(x2, env, root).asInstanceOf[FuzzyVal].i)
-      case FuzzyNot(x) => FuzzyVal(1.0 - eval(x, env, root).asInstanceOf[FuzzyVal].i)
+      case FuzzyAdd(x1, x2) =>
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        (left, right) match
+          case (FuzzyVal(i1), FuzzyVal(i2)) => Add(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzyVal(0.0), r) => r // Identity for addition
+          case (l, FuzzyVal(0.0)) => l
+          // Associativity and Commutativity: Group constants
+          case (FuzzyVal(i1), FuzzyAdd(FuzzyVal(i2), r)) =>  FuzzyAdd(Add(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case _ => FuzzyAdd(left, right)
+          
+      case FuzzyMult(x1, x2) =>
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        (left, right) match
+          case (FuzzyVal(i1), FuzzyVal(i2)) => Mult(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzyVal(1.0), r) => r // Identity for multiplication
+          case (l, FuzzyVal(1.0)) => l
+          // Associativity and Commutativity: Group constants
+          case (FuzzyVal(i1), FuzzyMult(FuzzyVal(i2), r)) =>  FuzzyMult(Mult(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case _ => FuzzyMult(left, right)
+
+      case FuzzyNot(x) =>
+        val expr = eval(x, env, root)
+        expr match
+          case FuzzyVal(i) => Not(FuzzyVal(i))
+          case FuzzySet(elems) => Not(FuzzySet(elems))
+          case _ => throw new Exception("Invalid fuzzy negation on non-compatible types")
 
       // Logic operations for fuzzy types
       case FuzzyAnd(x1, x2) =>
-        val v1 = eval(x1, env, root).asInstanceOf[FuzzyVal].i
-        val v2 = eval(x2, env, root).asInstanceOf[FuzzyVal].i
-        FuzzyVal(math.min(v1, v2))
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        (left, right) match
+          case (FuzzyVal(i1), FuzzyVal(i2)) => And(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzyVal(1.0), r) => r // Identity for AND
+          case (l, FuzzyVal(1.0)) => l
+          // Associativity and Commutativity: Group constants
+          case (FuzzyVal(i1), FuzzyAnd(FuzzyVal(i2), r)) =>  FuzzyAnd(And(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case _ => FuzzyAnd(left, right)
+
+      case FuzzyOr(x1, x2) =>
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        (left, right) match
+          case (FuzzyVal(i1), FuzzyVal(i2)) => Or(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzyVal(0.0), r) => r // Identity for OR
+          case (l, FuzzyVal(0.0)) => l
+          // Associativity and Commutativity: Group constants
+          case (FuzzyVal(i1), FuzzyOr(FuzzyVal(i2), r)) =>  FuzzyOr(Or(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case _ => FuzzyOr(left, right)
+
+      case FuzzyXor(x1, x2) =>
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        (left, right) match
+          case (FuzzyVal(i1), FuzzyVal(i2)) => Xor(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzyVal(0.0), r) => r // Identity for XOR
+          case (l, FuzzyVal(0.0)) => l
+          // Associativity and Commutativity: Group constants
+          case (FuzzyVal(i1), FuzzyXor(FuzzyVal(i2), r)) =>  FuzzyXor(Xor(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case _ => FuzzyXor(left, right)
+
+      case FuzzyNand(x1, x2) => Not(FuzzyAnd(x1, x2))
+      case FuzzyNor(x1, x2) => Not(FuzzyOr(x1, x2))
 
       // Non-fuzzy operations using underlying Scala logic
       case NonFuzzyAssign(name: String, value: NonFuzzyType[?]) =>
@@ -153,8 +211,8 @@ object FuzzyEvaluator:
           val paramType = param.paramType.name
           println(evaluatedArg.getClass.getSimpleName)
           if evaluatedArg.getClass.getSimpleName == "NonFuzzyType" then
-            if paramType!="Any" && evaluatedArg.asInstanceOf[NonFuzzyType[_]].value.getClass.getSimpleName != paramType then
-              throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType got ${evaluatedArg.asInstanceOf[NonFuzzyType[_]].value.getClass.getSimpleName}")
+            if paramType!="Any" && evaluatedArg.asInstanceOf[NonFuzzyType[?]].value.getClass.getSimpleName != paramType then
+              throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType got ${evaluatedArg.asInstanceOf[NonFuzzyType[?]].value.getClass.getSimpleName}")
           else if paramType!="Any" && evaluatedArg.getClass.getSimpleName != paramType then
             throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType")
 

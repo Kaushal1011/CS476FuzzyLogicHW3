@@ -15,109 +15,53 @@ def main(): Unit = {
   // Create a common environment
   val commonEnv = new Environment(Some("GlobalScope"), mutable.Map.empty)
 
-  // Define a Base class with a method and fuzzy logic
-  val baseClass = CreateClass(
-    "Base",
-    None,
-    List(ClassVar("v1", VarType("Integer"))), // Declare an integer variable v1
-    List(MethodDef(
-      "m1",
-      List(Parameter("p1", ParamType("Integer"))), // Single parameter method
-      List(
-        NonFuzzyAssign("v1", NonFuzzyType(10)), // Assign to non-fuzzy var
-        FuzzyAdd(FuzzyVal(0.5), FuzzyVal(0.7)) // Perform a fuzzy addition
-      )
-    ))
-  )
-  eval(baseClass, commonEnv, commonEnv)
-  println("Base class created.")
+  // Partial evaluation of FuzzyAdd with undefined variables
+  val expr1 = FuzzyAdd(FuzzyVal(0.5), FuzzyVar("x"))
+  val result1 = eval(expr1, commonEnv, commonEnv)
+  println(s"Result of partial evaluation of FuzzyAdd: $result1")
 
-  // Define a macro and evaluate it
-  val defineMacroExpr = DefineMacro("macroExample", FuzzyAdd(FuzzyVal(0.3), FuzzyVal(0.2)))
-  eval(defineMacroExpr, commonEnv, commonEnv)
-  println("Macro 'macroExample' defined.")
+  // Now define 'x' and re-evaluate
+  commonEnv.setVariable("x", FuzzyVal(0.3))
+  val result1_full = eval(expr1, commonEnv, commonEnv)
+  println(s"Result after defining 'x': $result1_full\n")
 
-  // Use the macro in a fuzzy expression
-  val useMacroExpr = FuzzyAdd(Macro("macroExample"), FuzzyVal(0.5))
-  println(useMacroExpr)
+  // Partial evaluation of FuzzyMult with undefined variables
+  val expr2 = FuzzyMult(FuzzyVal(0.5), FuzzyVar("y"))
+  val result2 = eval(expr2, commonEnv, commonEnv)
+  println(s"Result of partial evaluation of FuzzyMult: $result2")
 
-  val macroResult = eval(useMacroExpr, commonEnv, commonEnv)
-  println(s"Result of using 'macroExample' macro in expression: $macroResult")
+  // Now define 'y' and re-evaluate
+  commonEnv.setVariable("y", FuzzyVal(0.6))
+  val result2_full = eval(expr2, commonEnv, commonEnv)
+  println(s"Result after defining 'y': $result2_full\n")
 
-  val addition = (args: Seq[Any]) => args(0).asInstanceOf[Integer] + args(1).asInstanceOf[Integer]
+  // Testing associative and commutative simplification
+  val expr3 = FuzzyAdd(FuzzyVal(0.2), FuzzyAdd(FuzzyVal(0.3), FuzzyVar("z")))
+  val result3 = eval(expr3, commonEnv, commonEnv)
+  println(s"Result of partial evaluation with associativity: $result3")
 
-  // Define a Derived class extending Base with an additional method
-  val derivedClass = CreateClass(
-    "Derived",
-    Some("Base"), // Extends Base class
-    List(ClassVar("v2", VarType("String"))), // Add string variable v2
-    List(
-      MethodDef(
-        "m2",
-        List(Parameter("p2", ParamType("String"))),
-        List(
-          NonFuzzyAssign("v2", NonFuzzyType("hello")), // Assign a non-fuzzy string
-          FuzzyMult(FuzzyVal(2.0), FuzzyVal(3.0)) // Perform a fuzzy multiplication
-        )
-      ),
-      MethodDef(
-        "m3",
-        List(Parameter("p3", ParamType("Integer"))), // Second method with an int parameter
-        List(
-          FuzzyAnd(FuzzyVal(0.8), FuzzyVal(0.9)), // Perform a fuzzy AND
-          NonFuzzyAssign("v1", NonFuzzyType(50)) // Override variable v1 in derived class
-        )
-      ),
-      MethodDef(
-        "m5",
-        List(Parameter("p5", ParamType("Integer"))),
-        List(
-          NonFuzzyAssign("v1", NonFuzzyType(100)),
-          NonFuzzyAssign("v2", NonFuzzyOperation(List(NonFuzzyType(10), NonFuzzyVar("p5")), addition))
-        )
-      )
-    )
-  )
-  eval(derivedClass, commonEnv, commonEnv)
-  println("Derived class created.")
+  // Now define 'z' and re-evaluate
+  commonEnv.setVariable("z", FuzzyVal(0.4))
+  val result3_full = eval(expr3, commonEnv, commonEnv)
+  println(s"Result after defining 'z': $result3_full\n")
 
+  // Partial evaluation in logical operations
+  val expr4 = FuzzyAnd(FuzzyVal(0.7), FuzzyVar("a"))
+  val result4 = eval(expr4, commonEnv, commonEnv)
+  println(s"Result of partial evaluation of FuzzyAnd: $result4")
 
-  // Create a let expression with local variables and evaluate it
-  val letExpr = Let(
-    List(
-      Assign(FuzzyVar("temp"), FuzzyAdd(FuzzyVal(0.6), FuzzyVal(0.4))),
-      Assign(FuzzyVar("result"), FuzzyMult(Macro("macroExample"), FuzzyVar("temp")))
-    ),
-    FuzzyAdd(FuzzyVar("result"), FuzzyVal(0.1))
-  )
-  val letResult = eval(letExpr, commonEnv, commonEnv)
-  println(s"Result of let expression: $letResult")
+  // Now define 'a' and re-evaluate
+  commonEnv.setVariable("a", FuzzyVal(0.9))
+  val result4_full = eval(expr4, commonEnv, commonEnv)
+  println(s"Result after defining 'a': $result4_full\n")
 
-  // Create an instance of the Derived class
-  val createInstanceExpr = CreateInstance("Derived")
-  val instanceResult = eval(createInstanceExpr, commonEnv, commonEnv)
-  println(s"Created instance of Derived: $instanceResult")
+  // Partial evaluation in assignments
+  val assignExpr = Assign(FuzzyVar("b"), FuzzyAdd(FuzzyVal(0.2), FuzzyVar("c")))
+  val resultAssign = eval(assignExpr, commonEnv, commonEnv)
+  println(s"Result of partial evaluation in assignment: $resultAssign")
 
-  // Invoke a method (m2) on the Derived class instance
-  val invokeMethodExpr = InvokeMethod("Derived", "m2", List(("p2", NonFuzzyType("world"))))
-  val methodResult = eval(invokeMethodExpr, commonEnv, commonEnv)
-  println(s"Result of invoking m2: $methodResult")
-
-  // Invoke the second method (m3) to test fuzzy logic and variable assignment
-  val invokeMethodExpr2 = InvokeMethod("Derived", "m3", List(("p3", NonFuzzyType(42))))
-  val methodResult2 = eval(invokeMethodExpr2, commonEnv, commonEnv)
-  println(s"Result of invoking m3: $methodResult2")
-
-  // Call the inherited method m1 on the derived instance
-  val invokeBaseMethodExpr = InvokeMethod("Derived", "m1", List(("p1", NonFuzzyType(5))))
-  val baseMethodResult = eval(invokeBaseMethodExpr, commonEnv, commonEnv)
-  println(s"Result of invoking m1 from base class on derived instance: $baseMethodResult")
-
-  // Call the method m5 on the derived instance
-  val invokeMethodExpr5 = InvokeMethod("Derived", "m5", List(("p5", NonFuzzyType(35))))
-  val methodResult5 = eval(invokeMethodExpr5, commonEnv, commonEnv)
-  println(s"Result of invoking m5: $methodResult5")
-
-  // Print the final environment to check all classes, instances, variables, and macros
-  commonEnv.printEnvironment()
+  // Now define 'c' and re-evaluate 'b'
+  commonEnv.setVariable("c", FuzzyVal(0.5))
+  val bValue = eval(FuzzyVar("b"), commonEnv, commonEnv)
+  println(s"Value of 'b' after defining 'c': $bValue\n")
 }
