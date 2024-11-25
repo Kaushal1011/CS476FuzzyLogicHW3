@@ -22,9 +22,9 @@ object FuzzyExpressions:
         case FuzzyNor(x1: FuzzyExpression, x2: FuzzyExpression)
 
         // Set operations
-        case FuzzyAlphaCut(set: FuzzySet, cut: FuzzyVal)
-        case FuzzyUnion(set1: FuzzySet, set2: FuzzySet)
-        case FuzzyIntersection(set1: FuzzySet, set2: FuzzySet)
+        case FuzzyAlphaCut(set: FuzzySet|FuzzyExpression, cut: FuzzyVal|FuzzyExpression)
+        case FuzzyUnion(set1: FuzzySet|FuzzyExpression, set2: FuzzySet|FuzzyExpression)
+        case FuzzyIntersection(set1: FuzzySet|FuzzyExpression, set2: FuzzySet|FuzzyExpression)
 
         // Assignment and Scoping
         case Assign(s: FuzzyExpression, e: FuzzyExpression)
@@ -69,5 +69,5 @@ object FuzzyExpressions:
 //                NonFuzzyType(fun(args))
 
         case Macro(name: String) // Macro case for macro substitution
-        case Let(assignments: List[Assign], inExpr: FuzzyExpression) // Let-in construct
+        case Let(assignments: List[Assign|FuzzyExpression], inExpr: FuzzyExpression) // Let-in construct
         case DefineMacro(name: String, expr: FuzzyExpression) // Defining a macro

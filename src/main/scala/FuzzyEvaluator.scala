@@ -44,10 +44,19 @@ object FuzzyEvaluator:
         val right = eval(x2, env, root)
         (left, right) match
           case (FuzzyVal(i1), FuzzyVal(i2)) => Add(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzySet(elems1), FuzzySet(elems2)) => Add(FuzzySet(elems1), FuzzySet(elems2))
           case (FuzzyVal(0.0), r) => r // Identity for addition
           case (l, FuzzyVal(0.0)) => l
           // Associativity and Commutativity: Group constants
           case (FuzzyVal(i1), FuzzyAdd(FuzzyVal(i2), r)) =>  FuzzyAdd(Add(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case (FuzzyVal(i1), FuzzyAdd(l,FuzzyVal(i2))) =>  FuzzyAdd(l,Add(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzyAdd(FuzzyVal(i1), r), FuzzyVal(i2)) =>  FuzzyAdd(Add(FuzzyVal(i1), FuzzyVal(i2)),r)
+          case (FuzzyAdd(l, FuzzyVal(i1)), FuzzyVal(i2)) =>  FuzzyAdd(l,Add(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzySet(elems1), FuzzyAdd(FuzzySet(elems2), r)) =>  FuzzyAdd(Add(FuzzySet(elems1), FuzzySet(elems2)), r)
+          case (FuzzySet(elems1), FuzzyAdd(l,FuzzySet(elems2))) =>  FuzzyAdd(l,Add(FuzzySet(elems1), FuzzySet(elems2)))
+          case (FuzzyAdd(FuzzySet(elems1), r), FuzzySet(elems2)) =>  FuzzyAdd(Add(FuzzySet(elems1), FuzzySet(elems2)),r)
+          case (FuzzyAdd(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyAdd(l,Add(FuzzySet(elems1), FuzzySet(elems2)))
+          //          case (FuzzyVal(i1), FuzzyAdd(l,FuzzyVal(i2))) =>  FuzzyAdd(l,Add(FuzzyVal(i1), FuzzyVal(i2)))
           case _ => FuzzyAdd(left, right)
           
       case FuzzyMult(x1, x2) =>
@@ -55,10 +64,18 @@ object FuzzyEvaluator:
         val right = eval(x2, env, root)
         (left, right) match
           case (FuzzyVal(i1), FuzzyVal(i2)) => Mult(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzySet(elems1), FuzzySet(elems2)) => Mult(FuzzySet(elems1), FuzzySet(elems2))
           case (FuzzyVal(1.0), r) => r // Identity for multiplication
           case (l, FuzzyVal(1.0)) => l
           // Associativity and Commutativity: Group constants
           case (FuzzyVal(i1), FuzzyMult(FuzzyVal(i2), r)) =>  FuzzyMult(Mult(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case (FuzzyVal(i1), FuzzyMult(l,FuzzyVal(i2))) =>  FuzzyMult(l,Mult(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzyMult(FuzzyVal(i1), r), FuzzyVal(i2)) =>  FuzzyMult(Mult(FuzzyVal(i1), FuzzyVal(i2)),r)
+          case (FuzzyMult(l, FuzzyVal(i1)), FuzzyVal(i2)) =>  FuzzyMult(l,Mult(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzySet(elems1), FuzzyMult(FuzzySet(elems2), r)) =>  FuzzyMult(Mult(FuzzySet(elems1), FuzzySet(elems2)), r)
+          case (FuzzySet(elems1), FuzzyMult(l,FuzzySet(elems2))) =>  FuzzyMult(l,Mult(FuzzySet(elems1), FuzzySet(elems2)))
+          case (FuzzyMult(FuzzySet(elems1), r), FuzzySet(elems2)) =>  FuzzyMult(Mult(FuzzySet(elems1), FuzzySet(elems2)),r)
+          case (FuzzyMult(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyMult(l,Mult(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyMult(left, right)
 
       case FuzzyNot(x) =>
@@ -66,7 +83,8 @@ object FuzzyEvaluator:
         expr match
           case FuzzyVal(i) => Not(FuzzyVal(i))
           case FuzzySet(elems) => Not(FuzzySet(elems))
-          case _ => throw new Exception("Invalid fuzzy negation on non-compatible types")
+          case _ => FuzzyNot(expr)
+//            throw new Exception("Invalid fuzzy negation on non-compatible types")
 
       // Logic operations for fuzzy types
       case FuzzyAnd(x1, x2) =>
@@ -74,10 +92,18 @@ object FuzzyEvaluator:
         val right = eval(x2, env, root)
         (left, right) match
           case (FuzzyVal(i1), FuzzyVal(i2)) => And(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzySet(elems1), FuzzySet(elems2)) => And(FuzzySet(elems1), FuzzySet(elems2))
           case (FuzzyVal(1.0), r) => r // Identity for AND
           case (l, FuzzyVal(1.0)) => l
           // Associativity and Commutativity: Group constants
           case (FuzzyVal(i1), FuzzyAnd(FuzzyVal(i2), r)) =>  FuzzyAnd(And(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case (FuzzyVal(i1), FuzzyAnd(l,FuzzyVal(i2))) =>  FuzzyAnd(l,And(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzyAnd(FuzzyVal(i1), r), FuzzyVal(i2)) =>  FuzzyAnd(And(FuzzyVal(i1), FuzzyVal(i2)),r)
+          case (FuzzyAnd(l, FuzzyVal(i1)), FuzzyVal(i2)) =>  FuzzyAnd(l,And(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzySet(elems1), FuzzyAnd(FuzzySet(elems2), r)) =>  FuzzyAnd(And(FuzzySet(elems1), FuzzySet(elems2)), r)
+          case (FuzzySet(elems1), FuzzyAnd(l,FuzzySet(elems2))) =>  FuzzyAnd(l,And(FuzzySet(elems1), FuzzySet(elems2)))
+          case (FuzzyAnd(FuzzySet(elems1), r), FuzzySet(elems2)) =>  FuzzyAnd(And(FuzzySet(elems1), FuzzySet(elems2)),r)
+          case (FuzzyAnd(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyAnd(l,And(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyAnd(left, right)
 
       case FuzzyOr(x1, x2) =>
@@ -85,10 +111,18 @@ object FuzzyEvaluator:
         val right = eval(x2, env, root)
         (left, right) match
           case (FuzzyVal(i1), FuzzyVal(i2)) => Or(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzySet(elems1), FuzzySet(elems2)) => Or(FuzzySet(elems1), FuzzySet(elems2))
           case (FuzzyVal(0.0), r) => r // Identity for OR
           case (l, FuzzyVal(0.0)) => l
           // Associativity and Commutativity: Group constants
           case (FuzzyVal(i1), FuzzyOr(FuzzyVal(i2), r)) =>  FuzzyOr(Or(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case (FuzzyVal(i1), FuzzyOr(l,FuzzyVal(i2))) =>  FuzzyOr(l,Or(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzyOr(FuzzyVal(i1), r), FuzzyVal(i2)) =>  FuzzyOr(Or(FuzzyVal(i1), FuzzyVal(i2)),r)
+          case (FuzzyOr(l, FuzzyVal(i1)), FuzzyVal(i2)) =>  FuzzyOr(l,Or(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzySet(elems1), FuzzyOr(FuzzySet(elems2), r)) =>  FuzzyOr(Or(FuzzySet(elems1), FuzzySet(elems2)), r)
+          case (FuzzySet(elems1), FuzzyOr(l,FuzzySet(elems2))) =>  FuzzyOr(l,Or(FuzzySet(elems1), FuzzySet(elems2)))
+          case (FuzzyOr(FuzzySet(elems1), r), FuzzySet(elems2)) =>  FuzzyOr(Or(FuzzySet(elems1), FuzzySet(elems2)),r)
+          case (FuzzyOr(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyOr(l,Or(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyOr(left, right)
 
       case FuzzyXor(x1, x2) =>
@@ -96,14 +130,37 @@ object FuzzyEvaluator:
         val right = eval(x2, env, root)
         (left, right) match
           case (FuzzyVal(i1), FuzzyVal(i2)) => Xor(FuzzyVal(i1), FuzzyVal(i2))
+          case (FuzzySet(elems1), FuzzySet(elems2)) => Xor(FuzzySet(elems1), FuzzySet(elems2))
+
           case (FuzzyVal(0.0), r) => r // Identity for XOR
           case (l, FuzzyVal(0.0)) => l
           // Associativity and Commutativity: Group constants
           case (FuzzyVal(i1), FuzzyXor(FuzzyVal(i2), r)) =>  FuzzyXor(Xor(FuzzyVal(i1), FuzzyVal(i2)), r)
+          case (FuzzyVal(i1), FuzzyXor(l,FuzzyVal(i2))) =>  FuzzyXor(l,Xor(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzyXor(FuzzyVal(i1), r), FuzzyVal(i2)) =>  FuzzyXor(Xor(FuzzyVal(i1), FuzzyVal(i2)),r)
+          case (FuzzyXor(l, FuzzyVal(i1)), FuzzyVal(i2)) =>  FuzzyXor(l,Xor(FuzzyVal(i1), FuzzyVal(i2)))
+          case (FuzzySet(elems1), FuzzyXor(FuzzySet(elems2), r)) =>  FuzzyXor(Xor(FuzzySet(elems1), FuzzySet(elems2)), r)
+          case (FuzzySet(elems1), FuzzyXor(l,FuzzySet(elems2))) =>  FuzzyXor(l,Xor(FuzzySet(elems1), FuzzySet(elems2)))
+          case (FuzzyXor(FuzzySet(elems1), r), FuzzySet(elems2)) =>  FuzzyXor(Xor(FuzzySet(elems1), FuzzySet(elems2)),r)
+          case (FuzzyXor(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyXor(l,Xor(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyXor(left, right)
 
-      case FuzzyNand(x1, x2) => Not(FuzzyAnd(x1, x2))
-      case FuzzyNor(x1, x2) => Not(FuzzyOr(x1, x2))
+      case FuzzyNand(x1, x2) =>
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        val andEval = eval(FuzzyAnd(left, right), env, root)
+        (andEval) match
+          case FuzzyVal(i) => Not(FuzzyVal(i))
+          case FuzzySet(elems) => Not(FuzzySet(elems))
+          case _ => FuzzyNand(left, right)
+      case FuzzyNor(x1, x2) =>
+        val left = eval(x1, env, root)
+        val right = eval(x2, env, root)
+        val orEval = eval(FuzzyOr(left, right), env, root)
+        (orEval) match
+          case FuzzyVal(i) => Not(FuzzyVal(i))
+          case FuzzySet(elems) => Not(FuzzySet(elems))
+          case _ => FuzzyNor(left, right)
 
       // Non-fuzzy operations using underlying Scala logic
       case NonFuzzyAssign(name: String, value: NonFuzzyType[?]) =>
@@ -125,11 +182,24 @@ object FuzzyEvaluator:
 
       // Set operations for fuzzy types
       case FuzzyAlphaCut(set, cut) =>
-        AlphaCut(eval(set, env, root).asInstanceOf[FuzzySet], eval(cut, env, root).asInstanceOf[FuzzyVal])
+        val setEval = eval(set, env, root)
+        val cutEval = eval(cut, env, root)
+        (setEval, cutEval) match
+          case (FuzzySet(elems), FuzzyVal(c)) => AlphaCut(FuzzySet(elems), FuzzyVal(c))
+          case _ => FuzzyAlphaCut(setEval, cutEval)
+//            throw new Exception("Invalid fuzzy alpha cut operation")
       case FuzzyUnion(set1, set2) =>
-        Union(eval(set1, env, root).asInstanceOf[FuzzySet], eval(set2, env, root).asInstanceOf[FuzzySet])
+        val left = eval(set1, env, root)
+        val right = eval(set2, env,root)
+        (left, right) match
+          case (FuzzySet(elems1), FuzzySet(elems2)) => Union(FuzzySet(elems1), FuzzySet(elems2))
+          case _ => FuzzyUnion(left, right)
       case FuzzyIntersection(set1, set2) =>
-        Intersection(eval(set1, env, root).asInstanceOf[FuzzySet], eval(set2, env, root).asInstanceOf[FuzzySet])
+        val left = eval(set1, env, root)
+        val right = eval(set2, env,root)
+        (left, right) match
+          case (FuzzySet(elems1), FuzzySet(elems2)) => Intersection(FuzzySet(elems1), FuzzySet(elems2))
+          case _ => FuzzyIntersection(left, right)
 
       // Handling non-fuzzy logic gate assignments and scopes
       case Assign(FuzzyGate(gateName), expr) =>
@@ -257,14 +327,27 @@ object FuzzyEvaluator:
       case Let(assignments, inExpr) =>
         // Create a new environment scope for Let
         val letEnv = env.createChild(Some("LetScope"))
+      
         // Evaluate each assignment and add it to the Let environment
-        assignments.foreach {
+        val evaluatedAssignments = assignments.map {
           case Assign(FuzzyVar(name: String), value) =>
-            letEnv.setVariable(name, eval(value, letEnv, root))
-          case _ => throw new Exception("Invalid assignment in Let construct")
+            val evaluatedValue = eval(value, letEnv, root)
+            letEnv.setVariable(name, evaluatedValue)
+            Assign(FuzzyVar(name), evaluatedValue)
+          case other =>
+            // Cannot evaluate assignment, keep it as is
+            other
         }
+      
         // Evaluate the expression within the Let scope
-        eval(inExpr, letEnv, root)
+        val evaluatedInExpr = eval(inExpr, letEnv, root)
+      
+        // Return the result if fully evaluated; otherwise, return the partially evaluated Let expression
+        if (evaluatedAssignments.forall(_.isInstanceOf[Assign]) && !evaluatedInExpr.isInstanceOf[Let]) {
+          evaluatedInExpr
+        } else {
+          Let(evaluatedAssignments, evaluatedInExpr)
+        }
 
 
       case _ => throw new Exception("Invalid Fuzzy Expression")
