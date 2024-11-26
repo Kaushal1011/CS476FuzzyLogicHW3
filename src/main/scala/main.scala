@@ -245,4 +245,12 @@ def main(): Unit = {
   commonEnv.setVariable("y", FuzzyVal(7))
   val resultBothResolved = eval(ifTrueBothPartial, commonEnv, commonEnv)
   println(s"Result after resolving condition and Then branch: $resultBothResolved\n")
+
+  val addition = (args: Seq[Any]) => args(0).asInstanceOf[Integer] + args(1).asInstanceOf[Integer]
+  val assignVar = NonFuzzyAssign("X", NonFuzzyOperation(List(NonFuzzyType(3), NonFuzzyType(3)), addition))
+  val resultVarAssign = eval(assignVar, commonEnv, commonEnv)
+  assert(resultVarAssign == NonFuzzyType(6))
+  val evalX = eval(NonFuzzyVar("X"), commonEnv, commonEnv)
+  //    println(evalX)
+  println(evalX)
 }

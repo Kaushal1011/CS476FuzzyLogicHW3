@@ -182,6 +182,7 @@ object FuzzyEvaluator:
 
       case NonFuzzyAssign(name: String, value: NonFuzzyOperation) =>
         try
+          println(s"Assigning $name to $value")
           env.setVariable(name, eval(value, env, root))
           eval(value, env, root)
         catch
@@ -415,5 +416,22 @@ object FuzzyEvaluator:
           // Return partially evaluated ElseRun
           ElseRun(evaluatedExprs)
         }
+
+      case NonFuzzyOperation(p, fun) =>
+        val args = p.map {
+          case fuzzyExpr: FuzzyExpression =>
+            eval(fuzzyExpr, env, root) match {
+              case evaluatedResult: NonFuzzyType[_] => // Handle specific case on eval result if it's of DesiredType
+                // Process evaluatedResult as needed
+                evaluatedResult.value
+              case fz: FuzzyVal =>
+                fz.i
+              case fsSet: FuzzySet =>
+                fsSet.elems.map { case (name, FuzzyVal(v)) => (v) }
+              case _ => throw new Exception("Invalid Fuzzy Expression")
+            }
+          case nonFuzzyValue => nonFuzzyValue // Non-fuzzy values remain as they are
+        }
+        NonFuzzyType(fun.apply(args))
 
       case _ => throw new Exception("Invalid Fuzzy Expression")
