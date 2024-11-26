@@ -7,6 +7,16 @@ import scala.collection.mutable
 
 object FuzzyEvaluator:
 
+  private def isFullyEvaluated(expr: FuzzyExpression): Boolean = expr match {
+    case FuzzyVal(_) => true
+    case NonFuzzyType(_) => true
+    case FuzzySet(elems) => elems.forall { case (_, v) => isFullyEvaluated(v) }
+    case ThenExecute(exprs) => exprs.forall(isFullyEvaluated)
+    case ElseRun(exprs) => exprs.forall(isFullyEvaluated)
+    case _ => false
+  }
+
+
   def eval(expr: FuzzyExpression, env: Environment, root: Environment): FuzzyExpression =
     expr match
       case FuzzyVal(i) => FuzzyVal(i) // Evaluates to itself
@@ -260,60 +270,52 @@ object FuzzyEvaluator:
         val instance = env.createInstance(className)
         FuzzyVal(instance.hashCode().toDouble) // Representing instance as a value (hash code)
 
-      // Handle InvokeMethod to call a method on an instance
       case InvokeMethod(instanceName, methodName, args) =>
-        val instance = env.instances.getOrElse(instanceName, throw new Exception(s"Instance $instanceName not found"))
-        val classDef = instance.classDef
+        // Evaluate arguments as much as possible
+        val evaluatedArgs = args.map { case (argName, argExpr) => (argName, eval(argExpr, env, root)) }
 
-        // Find the method in the class or its parent classes
-        def findMethod(classDef: ClassDef, methodName: String): Option[MethodDef] =
-          classDef.methods.find(_.methodName == methodName)
-            .orElse(classDef.extendsClass.flatMap(findMethod(_, methodName)))
+        env.instances.get(instanceName) match
+          case Some(instance) =>
+            val classDef = instance.classDef
 
-        val methodDef = findMethod(classDef, methodName).getOrElse(throw new Exception(s"Method $methodName not found in class ${classDef.name}"))
+            // Find the method in the class or its parent classes
+            def findMethod(classDef: ClassDef, methodName: String): Option[MethodDef] =
+              classDef.methods.find(_.methodName == methodName)
+                .orElse(classDef.extendsClass.flatMap(findMethod(_, methodName)))
 
-        // Create a new environment for the method scope
-        val methodEnv = env.createChild(Some(s"MethodScope-$methodName"))
+            findMethod(classDef, methodName) match
+              case Some(methodDef) =>
+                // Create a new environment for the method scope
+                val methodEnv = env.createChild(Some(s"MethodScope-$methodName"))
 
-        // Bind method parameters in the new environment
-        methodDef.parameters.zip(args).foreach { case (param, (argName, argExpr)) =>
-          val evaluatedArg = eval(argExpr, env, root)
-          val paramType = param.paramType.name
-          println(evaluatedArg.getClass.getSimpleName)
-          if evaluatedArg.getClass.getSimpleName == "NonFuzzyType" then
-            if paramType!="Any" && evaluatedArg.asInstanceOf[NonFuzzyType[?]].value.getClass.getSimpleName != paramType then
-              throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType got ${evaluatedArg.asInstanceOf[NonFuzzyType[?]].value.getClass.getSimpleName}")
-          else if paramType!="Any" && evaluatedArg.getClass.getSimpleName != paramType then
-            throw new Exception(s"Invalid argument type for parameter ${param.name}, expected $paramType")
+                // Bind method parameters in the new environment
+                methodDef.parameters.zip(evaluatedArgs).foreach { case (param, (argName, argValue)) =>
+                  methodEnv.setVariable(param.name, argValue)
+                }
 
-          methodEnv.setVariable(param.name, evaluatedArg)
-        }
+                // Evaluate all statements in the method body one by one
+                val evaluatedBody = methodDef.body match
+                  case singleExpr: FuzzyExpression =>
+                    List(eval(singleExpr, methodEnv, root))
+                  case exprList: List[FuzzyExpression] =>
+                    exprList.map(expr => eval(expr, methodEnv, root))
 
-        // Evaluate all statements in the method body and return the result of the last one
-        methodDef.body match
-          case singleExpr: FuzzyExpression => eval(singleExpr, methodEnv, root)
-          case exprList: List[FuzzyExpression] =>
-            val invoked = exprList.map(eval(_, methodEnv, root))
-//            println(exprList)
-//            println(s"Method $methodName invoked with result: $invoked")
-            invoked.last
+                // Check if all expressions are fully evaluated
+                val allFullyEvaluated = evaluatedBody.forall(isFullyEvaluated)
 
-      case NonFuzzyOperation(p, fun) =>
-        val args = p.map {
-          case fuzzyExpr: FuzzyExpression =>
-            eval(fuzzyExpr, env, root) match {
-              case evaluatedResult: NonFuzzyType[_] => // Handle specific case on eval result if it's of DesiredType
-                // Process evaluatedResult as needed
-                evaluatedResult.value
-              case fz: FuzzyVal =>
-                fz.i
-              case fsSet: FuzzySet =>
-                fsSet.elems.map { case (name, FuzzyVal(v)) => (v) }
-              case _ => throw new Exception("Invalid Fuzzy Expression")
-            }
-          case nonFuzzyValue => nonFuzzyValue // Non-fuzzy values remain as they are
-        }
-        NonFuzzyType(fun.apply(args))
+                if (allFullyEvaluated) {
+                  // Return the last result
+                  evaluatedBody.last
+                } else {
+                  // Return the list of partially evaluated expressions
+                  PartiallyEvaluatedMethod(evaluatedBody)
+                }
+              case None =>
+                // Method not found, return partially evaluated InvokeMethod
+                InvokeMethod(instanceName, methodName, evaluatedArgs)
+          case None =>
+            // Instance not found, return partially evaluated InvokeMethod
+            InvokeMethod(instanceName, methodName, evaluatedArgs)
 
       case Macro(name) =>
         eval(env.lookupMacro(name).getOrElse(throw new Exception(s"Macro $name not defined")), env, root)
@@ -327,7 +329,7 @@ object FuzzyEvaluator:
       case Let(assignments, inExpr) =>
         // Create a new environment scope for Let
         val letEnv = env.createChild(Some("LetScope"))
-      
+
         // Evaluate each assignment and add it to the Let environment
         val evaluatedAssignments = assignments.map {
           case Assign(FuzzyVar(name: String), value) =>
@@ -338,10 +340,10 @@ object FuzzyEvaluator:
             // Cannot evaluate assignment, keep it as is
             other
         }
-      
+
         // Evaluate the expression within the Let scope
         val evaluatedInExpr = eval(inExpr, letEnv, root)
-      
+
         // Return the result if fully evaluated; otherwise, return the partially evaluated Let expression
         if (evaluatedAssignments.forall(_.isInstanceOf[Assign]) && !evaluatedInExpr.isInstanceOf[Let]) {
           evaluatedInExpr
@@ -349,5 +351,69 @@ object FuzzyEvaluator:
           Let(evaluatedAssignments, evaluatedInExpr)
         }
 
+    // Evaluate IfTrue construct
+      case IfTrue(condition, ThenExecute(thenBranch), ElseRun(elseBranch)) =>
+        // Evaluate the condition
+        val condEval = eval(condition, env, root)
+        condEval match
+          case FuzzyVal(c) if c >= 1.0 =>
+            // Fully evaluate Then branch
+            val evaluatedThen = thenBranch.map(e => eval(e, env, root))
+            if (evaluatedThen.forall(isFullyEvaluated)) {
+              FuzzyVal(1.0) // Return 1.0 if all Then branch expressions are fully evaluated
+            } else {
+              // Return partially evaluated IfTrue with remaining Then branch
+              IfTrue(condEval, ThenExecute(evaluatedThen), ElseRun(elseBranch))
+            }
+          case FuzzyVal(c) if c < 1.0 =>
+            // Fully evaluate Else branch
+            val evaluatedElse = elseBranch.map(e => eval(e, env, root))
+            if (evaluatedElse.forall(isFullyEvaluated)) {
+              FuzzyVal(1.0) // Return 0.0 if all Else branch expressions are fully evaluated
+            } else {
+              // Return partially evaluated IfTrue with remaining Else branch
+              IfTrue(condEval, ThenExecute(thenBranch), ElseRun(evaluatedElse))
+            }
+          case NonFuzzyType(true) =>
+            // Fully evaluate Then branch
+            val evaluatedThen = thenBranch.map(e => eval(e, env, root))
+            if (evaluatedThen.forall(isFullyEvaluated)) {
+              FuzzyVal(1.0) // Return 1.0 if all Then branch expressions are fully evaluated
+            } else {
+              // Return partially evaluated IfTrue with remaining Then branch
+              IfTrue(condEval, ThenExecute(evaluatedThen), ElseRun(elseBranch))
+            }
+          case NonFuzzyType(false) =>
+            // Fully evaluate Else branch
+            val evaluatedElse = elseBranch.map(e => eval(e, env, root))
+            if (evaluatedElse.forall(isFullyEvaluated)) {
+              FuzzyVal(1.0) // Return 0.0 if all Else branch expressions are fully evaluated
+            } else {
+              // Return partially evaluated IfTrue with remaining Else branch
+              IfTrue(condEval, ThenExecute(thenBranch), ElseRun(evaluatedElse))
+            }
+          case _ =>
+            // Return partially evaluated IfTrue if the condition isn't fully evaluated
+            IfTrue(condEval, ThenExecute(thenBranch), ElseRun(elseBranch))
+
+      // Evaluate ThenExecute construct
+      case ThenExecute(exprList) =>
+        val evaluatedExprs = exprList.map(e => eval(e, env, root))
+        if (evaluatedExprs.forall(isFullyEvaluated)) {
+          FuzzyVal(1.0) // Return 1.0 if all expressions are fully evaluated
+        } else {
+          // Return partially evaluated ThenExecute
+          ThenExecute(evaluatedExprs)
+        }
+
+      // Evaluate ElseRun construct
+      case ElseRun(exprList) =>
+        val evaluatedExprs = exprList.map(e => eval(e, env, root))
+        if (evaluatedExprs.forall(isFullyEvaluated)) {
+          FuzzyVal(1.0) // Return 1.0 if all expressions are fully evaluated
+        } else {
+          // Return partially evaluated ElseRun
+          ElseRun(evaluatedExprs)
+        }
 
       case _ => throw new Exception("Invalid Fuzzy Expression")

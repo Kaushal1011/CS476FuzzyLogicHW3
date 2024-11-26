@@ -1,3 +1,5 @@
+import FuzzyExpressions.FuzzyExpression.ThenExecute
+
 import scala.collection.mutable
 object FuzzyExpressions:
 
@@ -71,3 +73,19 @@ object FuzzyExpressions:
         case Macro(name: String) // Macro case for macro substitution
         case Let(assignments: List[Assign|FuzzyExpression], inExpr: FuzzyExpression) // Let-in construct
         case DefineMacro(name: String, expr: FuzzyExpression) // Defining a macro
+        case PartiallyEvaluatedMethod(body: List[FuzzyExpression])
+
+        // Conditional Expressions
+        case IfTrue(condition: FuzzyExpression, thenBranch: FuzzyExpression, elseBranch: FuzzyExpression)
+        case ThenExecute(expr: List[FuzzyExpression])
+        case ElseRun(expr: List[FuzzyExpression])
+
+//    object ConditionalSyntax:
+//
+//        implicit class ConditionalOps(condition: FuzzyExpression):
+//            def IfTrue(thenBranch: => FuzzyExpression): ThenBranch =
+//                ThenBranch(condition, ThenExecute(thenBranch))
+//
+//        case class ThenBranch(condition: FuzzyExpression, thenBranch: ThenExecute):
+//            def ElseRun(elseBranch: => FuzzyExpression): FuzzyExpression.IfTrue =
+//                FuzzyExpression.IfTrue(condition, thenBranch, ElseRun(elseBranch))

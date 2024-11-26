@@ -21,7 +21,7 @@ def main(): Unit = {
 
   // 1. Partial evaluation of FuzzyAdd with undefined variables
   println("---- Testing FuzzyAdd Partial Evaluation ----")
-  val expr1 = FuzzyAdd(FuzzyVal(0.5), FuzzyVar("x"))
+  val expr1 = FuzzyAdd(FuzzyAdd(FuzzyVal(0.5), FuzzyVal(0.1)), FuzzyVar("x"))
   val result1 = eval(expr1, commonEnv, commonEnv)
   println(s"Result of partial evaluation of FuzzyAdd: $result1")
 
@@ -132,4 +132,117 @@ def main(): Unit = {
   commonEnv.setVariable("q", FuzzyVal(0.9))
   val resultTestGate_full = eval(testGateExpr, commonEnv, commonEnv)
   println(s"Result after defining 'p' and 'q': $resultTestGate_full\n")
+  
+  
+  // -----------------------
+  // Partial Evaluation for InvokeMethod
+  // -----------------------
+  
+
+  // Define a class with a method that cannot be fully evaluated
+  println("---- Testing InvokeMethod Partial Evaluation ----")
+  val methodDef:MethodDef = MethodDef(
+    "compute",
+    List(Parameter("x", ParamType("FuzzyVal"))),
+    List(
+      Assign(FuzzyVar("result"), FuzzyAdd(FuzzyVar("x"), FuzzyVar("h"))),
+      FuzzyMult(FuzzyVar("result"), FuzzyVal(2.0))
+    )
+  )
+  val classDef: ClassDef = ClassDef("MyClass", None, List.empty, List(methodDef))
+  commonEnv.defineClass(classDef)
+
+  // Create an instance of the class
+  val instance = commonEnv.createInstance("MyClass")
+  commonEnv.instances.put("instance1", instance)
+
+  // Invoke method with partially undefined variable 'h'
+  val invokeExpr = InvokeMethod("instance1", "compute", List(("x", FuzzyVal(0.5))))
+  val resultInvoke = eval(invokeExpr, commonEnv, commonEnv)
+  println(s"Result of partial evaluation of InvokeMethod: $resultInvoke")
+
+  // Now define 'h' and re-evaluate
+  commonEnv.setVariable("h", FuzzyVal(0.2))
+  val resultInvoke_full = eval(invokeExpr, commonEnv, commonEnv)
+  println(s"Result after defining 'h': $resultInvoke_full\n")
+
+  // -----------------------
+  // Partial and Full Evaluation for IfTrue
+  // -----------------------
+  println("---- Testing IfTrue Full and Partial Evaluation ----")
+
+  // Full evaluation example
+  val ifTrueExprFull = IfTrue(
+    condition = FuzzyVal(1.0), // Fully evaluated condition
+    thenBranch = ThenExecute(List(
+      Assign(FuzzyVar("x"), FuzzyVal(10)),
+      Assign(FuzzyVar("y"), FuzzyVal(20))
+    )),
+    elseBranch = ElseRun(List(
+      Assign(FuzzyVar("x"), FuzzyVal(0)),
+      Assign(FuzzyVar("y"), FuzzyVal(0))
+    ))
+  )
+  val resultIfTrueFull = eval(ifTrueExprFull, commonEnv, commonEnv)
+  println(s"Result of fully evaluated IfTrue: $resultIfTrueFull")
+
+  // Partial evaluation example (undefined variable in Then branch)
+  val ifTrueExprPartial = IfTrue(
+    condition = FuzzyVal(1.0), // Fully evaluated condition
+    thenBranch = ThenExecute(List(
+      Assign(FuzzyVar("x"), FuzzyVal(10)),
+      Assign(FuzzyVar("y"), FuzzyVar("undefinedVar")) // Partially evaluated
+    )),
+    elseBranch = ElseRun(List(
+      Assign(FuzzyVar("x"), FuzzyVal(0)),
+      Assign(FuzzyVar("y"), FuzzyVal(0))
+    ))
+  )
+  val resultIfTruePartial = eval(ifTrueExprPartial, commonEnv, commonEnv)
+  println(s"Result of partially evaluated IfTrue: $resultIfTruePartial")
+
+  // Now define 'undefinedVar' and re-evaluate
+  commonEnv.setVariable("undefinedVar", FuzzyVal(30))
+  val resultIfTruePartialFull = eval(ifTrueExprPartial, commonEnv, commonEnv)
+  println(s"Result after resolving undefinedVar: $resultIfTruePartialFull\n")
+
+  // Partial evaluation where the condition is partially evaluated
+  println("---- Testing IfTrue with Partially Evaluated Condition ----")
+  val ifTrueConditionPartial = IfTrue(
+    condition = FuzzyAdd(FuzzyVal(0.5), FuzzyVar("condVar")), // Condition is partially evaluated
+    thenBranch = ThenExecute(List(
+      Assign(FuzzyVar("a"), FuzzyVal(1))
+    )),
+    elseBranch = ElseRun(List(
+      Assign(FuzzyVar("a"), FuzzyVal(0))
+    ))
+  )
+  val resultConditionPartial = eval(ifTrueConditionPartial, commonEnv, commonEnv)
+  println(s"Result of IfTrue with partially evaluated condition: $resultConditionPartial")
+
+  // Now define 'condVar' to resolve the condition
+  commonEnv.setVariable("condVar", FuzzyVal(0.5)) // Condition becomes FuzzyVal(1.0)
+  val resultConditionResolved = eval(ifTrueConditionPartial, commonEnv, commonEnv)
+  println(s"Result after resolving condition: $resultConditionResolved\n")
+
+  // Partial evaluation where both condition and Then branch are partially evaluated
+  println("---- Testing IfTrue with Partially Evaluated Condition and Then Branch ----")
+  val ifTrueBothPartial = IfTrue(
+    condition = FuzzyAdd(FuzzyVal(0.4), FuzzyVar("condVar2")), // Condition is partially evaluated
+    thenBranch = ThenExecute(List(
+      Assign(FuzzyVar("result"), FuzzyAdd(FuzzyVar("x"), FuzzyVar("y"))) // Partially evaluated
+    )),
+    elseBranch = ElseRun(List(
+      Assign(FuzzyVar("result"), FuzzyVal(0)) // Fully evaluated
+    ))
+  )
+  val resultBothPartial = eval(ifTrueBothPartial, commonEnv, commonEnv)
+  println(s"Result of IfTrue with partially evaluated condition and Then branch: $resultBothPartial")
+
+  // Resolve 'condVar2' and 'x', 'y' and re-evaluate
+  commonEnv.setVariable("condVar2", FuzzyVal(0.6)) // Condition resolves to FuzzyVal(1.0)
+  commonEnv.setVariable("x", FuzzyVal(5))
+  commonEnv.setVariable("y", FuzzyVal(7))
+  val resultBothResolved = eval(ifTrueBothPartial, commonEnv, commonEnv)
+  println(s"Result after resolving condition and Then branch: $resultBothResolved\n")
 }
