@@ -17,38 +17,52 @@ object FuzzyEvaluator:
   }
 
 
+//  Forward pass for eval checking partial eval and error conditions through comment labels
   def eval(expr: FuzzyExpression, env: Environment, root: Environment): FuzzyExpression =
     expr match
+//  FPPE:    Partially Safe, No error conditions
       case FuzzyVal(i) => FuzzyVal(i) // Evaluates to itself
       case FuzzySet(elems) => FuzzySet(elems) // Evaluates to itself
 
       // Evaluate FuzzyVar, lookup from the environment or throw an error if not found
+//    FPPE: Partially Safe (in case of var not found evaluates without it), Error condition: Variable not found
       case FuzzyVar(v) =>
         v match
           case (name: String, value: FuzzyExpression) =>
             env.lookup(name) match
               case Some(foundVar) => eval(foundVar, env, root) // Evaluate the found variable
-              case None => eval(value, env, root) // Default to evaluating the value if not found
+              case None =>
+                println(s"Warning: Variable $name not defined in scope ${env.name}")
+                eval(value, env, root) // Default to evaluating the value if not found
+
           case name: String =>
             env.lookup(name) match
               case Some(foundVar) => eval(foundVar, env, root) // Evaluate the found variable
-              case None => FuzzyVar(name) // Return the variable name if not found for later evaluation
+              case None =>
+                println(s"Warning: Variable $name not defined in scope ${env.name}")
+                FuzzyVar(name) // Return the variable name if not found for later evaluation
 //                throw new Exception(s"Variable $name not defined in scope ${env.name}")
 
       // NonFuzzyVar logic: Fetch value from environment or error if not found
+//      FPPE: Partially Safe (in case of var not found evaluates without it), Error condition: Variable not found
       case NonFuzzyVar(v) =>
         v match
           case (name: String, value: NonFuzzyType[?]) =>
             env.lookup(name) match
               case Some(foundVar) => eval(foundVar, env, root) // Evaluate the found variable
-              case None => NonFuzzyType(value) // Return the non-fuzzy value if not found
+              case None =>
+                println(s"Warning: Non-fuzzy variable $name not defined in scope ${env.name}")
+                NonFuzzyType(value) // Return the non-fuzzy value if not found
           case name: String =>
             env.lookup(name) match
               case Some(foundVar) => eval(foundVar, env, root) // Evaluate the found variable
-              case None => NonFuzzyVar(name) // Return the variable name if not found for later evaluation
+              case None =>
+                println(s"Warning: Non-fuzzy variable $name not defined in scope ${env.name}")
+                NonFuzzyVar(name) // Return the variable name if not found for later evaluation
 //                throw new Exception(s"Non-fuzzy variable $name not defined in scope ${env.name}")
 
       // Arithmetic operations for Fuzzy types
+//      FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyAdd(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -68,7 +82,8 @@ object FuzzyEvaluator:
           case (FuzzyAdd(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyAdd(l,Add(FuzzySet(elems1), FuzzySet(elems2)))
           //          case (FuzzyVal(i1), FuzzyAdd(l,FuzzyVal(i2))) =>  FuzzyAdd(l,Add(FuzzyVal(i1), FuzzyVal(i2)))
           case _ => FuzzyAdd(left, right)
-          
+
+//      FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyMult(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -88,6 +103,7 @@ object FuzzyEvaluator:
           case (FuzzyMult(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyMult(l,Mult(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyMult(left, right)
 
+//        FPPE: Partially Safe, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyNot(x) =>
         val expr = eval(x, env, root)
         expr match
@@ -97,6 +113,7 @@ object FuzzyEvaluator:
 //            throw new Exception("Invalid fuzzy negation on non-compatible types")
 
       // Logic operations for fuzzy types
+//      FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyAnd(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -116,6 +133,7 @@ object FuzzyEvaluator:
           case (FuzzyAnd(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyAnd(l,And(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyAnd(left, right)
 
+//        FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyOr(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -135,6 +153,7 @@ object FuzzyEvaluator:
           case (FuzzyOr(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyOr(l,Or(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyOr(left, right)
 
+//        FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyXor(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -155,6 +174,7 @@ object FuzzyEvaluator:
           case (FuzzyXor(l, FuzzySet(elems1)), FuzzySet(elems2)) =>  FuzzyXor(l,Xor(FuzzySet(elems1), FuzzySet(elems2)))
           case _ => FuzzyXor(left, right)
 
+//        FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyNand(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -163,6 +183,8 @@ object FuzzyEvaluator:
           case FuzzyVal(i) => Not(FuzzyVal(i))
           case FuzzySet(elems) => Not(FuzzySet(elems))
           case _ => FuzzyNand(left, right)
+
+//          FPPE: Partially Safe, Supports Associativity and Commutativity, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyNor(x1, x2) =>
         val left = eval(x1, env, root)
         val right = eval(x2, env, root)
@@ -189,22 +211,27 @@ object FuzzyEvaluator:
           case e: Exception => throw new Exception(s"Error in assigning NonFuzzyOperation: ${e.getMessage}")
 
       // Evaluates to itself
+//      FPPE: Partially Safe, No error conditions
       case NonFuzzyType(value) => NonFuzzyType(value)
 
       // Set operations for fuzzy types
+//      FPPE: Partially Safe, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyAlphaCut(set, cut) =>
         val setEval = eval(set, env, root)
         val cutEval = eval(cut, env, root)
         (setEval, cutEval) match
           case (FuzzySet(elems), FuzzyVal(c)) => AlphaCut(FuzzySet(elems), FuzzyVal(c))
           case _ => FuzzyAlphaCut(setEval, cutEval)
-//            throw new Exception("Invalid fuzzy alpha cut operation")
+//            throw new Exception("Invalid fuzzy alpha cut operation")\
+//      FPPE: Partially Safe, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyUnion(set1, set2) =>
         val left = eval(set1, env, root)
         val right = eval(set2, env,root)
         (left, right) match
           case (FuzzySet(elems1), FuzzySet(elems2)) => Union(FuzzySet(elems1), FuzzySet(elems2))
           case _ => FuzzyUnion(left, right)
+
+//      FPPE: Partially Safe, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case FuzzyIntersection(set1, set2) =>
         val left = eval(set1, env, root)
         val right = eval(set2, env,root)
@@ -217,13 +244,16 @@ object FuzzyEvaluator:
         env.setVariable(gateName, expr)
         val ns = env.getOrCreateChild(Some(gateName))
         ns.setVariable(gateName, expr)
-        expr
+//         return partially evaluated expression
+        eval(expr, env, root)
 
+//        FPPE: Partially Safe, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case Assign(FuzzyVar((name, value)), expr) =>
         val evaluatedExpr = eval(expr, env, root)
         env.setVariable(name, evaluatedExpr)
         evaluatedExpr
 
+//        FPPE: Partially Safe, Error condition: Invalid operation (Error can be generated for non-compatible types)
       case Assign(FuzzyVar(name: String), expr) =>
         val evaluatedExpr = eval(expr, env, root)
         env.setVariable(name, evaluatedExpr)
