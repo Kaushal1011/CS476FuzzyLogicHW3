@@ -84,7 +84,7 @@ class NonFuzzyTests extends AnyFunSuite {
     eval(derivedClass, commonEnv, commonEnv)
 //    println("Derived class created.")
 
-    val createInstanceExpr = CreateInstance("Derived")
+    val createInstanceExpr = CreateInstance("Derived", "Derived")
     val instanceResult = eval(createInstanceExpr, commonEnv, commonEnv)
 
     val invokeMethodExpr5 = InvokeMethod("Derived", "m5", List(("p5", NonFuzzyType(35))))

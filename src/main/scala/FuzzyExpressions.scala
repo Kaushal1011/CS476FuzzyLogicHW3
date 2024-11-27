@@ -1,5 +1,5 @@
 import FuzzyExpressions.FuzzyExpression.ThenExecute
-
+import EnvironmentScopes.Environment
 import scala.collection.mutable
 object FuzzyExpressions:
 
@@ -55,7 +55,7 @@ object FuzzyExpressions:
 
         case CreateClass(name: String, extendsClass: Option[String], vars: List[ClassVar], methods: List[MethodDef])
 
-        case CreateInstance(className: String)
+        case CreateInstance(className: String, instanceName: String)
 
         case InvokeMethod(instanceName: String, methodName: String, args: List[(String, FuzzyExpression)])
 
@@ -73,7 +73,7 @@ object FuzzyExpressions:
         case Macro(name: String) // Macro case for macro substitution
         case Let(assignments: List[Assign|FuzzyExpression], inExpr: FuzzyExpression) // Let-in construct
         case DefineMacro(name: String, expr: FuzzyExpression) // Defining a macro
-        case PartiallyEvaluatedMethod(body: List[FuzzyExpression])
+        case PartiallyEvaluatedMethod(body: List[FuzzyExpression], scope: Environment) // Partially evaluated method and scope for later evaluation
 
         // Conditional Expressions
         case IfTrue(condition: FuzzyExpression, thenBranch: FuzzyExpression, elseBranch: FuzzyExpression)

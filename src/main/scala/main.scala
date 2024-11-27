@@ -153,7 +153,7 @@ def main(): Unit = {
   commonEnv.defineClass(classDef)
 
   // Create an instance of the class
-  val instance = commonEnv.createInstance("MyClass")
+  val instance = commonEnv.createInstance("MyClass", "instance1")
   commonEnv.instances.put("instance1", instance)
 
   // Invoke method with partially undefined variable 'h'
@@ -163,7 +163,7 @@ def main(): Unit = {
 
   // Now define 'h' and re-evaluate
   commonEnv.setVariable("h", FuzzyVal(0.2))
-  val resultInvoke_full = eval(invokeExpr, commonEnv, commonEnv)
+  val resultInvoke_full = eval(resultInvoke, commonEnv, commonEnv)
   println(s"Result after defining 'h': $resultInvoke_full\n")
 
   // -----------------------
@@ -253,4 +253,14 @@ def main(): Unit = {
   val evalX = eval(NonFuzzyVar("X"), commonEnv, commonEnv)
   //    println(evalX)
   println(evalX)
+
+  val assignUndefined = Assign(FuzzyVar("x1"), FuzzyVar("y1"))
+  val res = eval(assignUndefined, commonEnv, commonEnv)
+  println(res)
+  commonEnv.setVariable("y1", FuzzyVal(0.5))
+  val k = FuzzyVar("x1")
+  val res1 = eval(k, commonEnv, commonEnv)
+  println(res1)
+
+
 }

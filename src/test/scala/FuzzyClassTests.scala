@@ -84,7 +84,7 @@ class FuzzyClassTests extends AnyFunSuite {
     eval(derivedClass, commonEnv, commonEnv)
 
     // Create an instance of Derived and invoke method m1
-    val createInstanceExpr = CreateInstance("Derived")
+    val createInstanceExpr = CreateInstance("Derived", "Derived")
     eval(createInstanceExpr, commonEnv, commonEnv)
 
     val invokeMethodExpr = InvokeMethod("Derived", "m1", List(("p1", NonFuzzyType(5))))
@@ -124,7 +124,7 @@ class FuzzyClassTests extends AnyFunSuite {
     eval(derivedClass, commonEnv, commonEnv)
 
     // Create an instance of Derived and invoke method m3
-    val createInstanceExpr = CreateInstance("Derived")
+    val createInstanceExpr = CreateInstance("Derived","Derived")
     eval(createInstanceExpr, commonEnv, commonEnv)
 
     val invokeMethodExpr = InvokeMethod("Derived", "m3", List(("p3", NonFuzzyType(42))))
@@ -150,7 +150,7 @@ class FuzzyClassTests extends AnyFunSuite {
     eval(derivedClass, commonEnv, commonEnv)
 
     // Create an instance of Derived and invoke method m4
-    val createInstanceExpr = CreateInstance("Derived")
+    val createInstanceExpr = CreateInstance("Derived", "Derived")
     eval(createInstanceExpr, commonEnv, commonEnv)
 
     val invokeMethodExpr = InvokeMethod("Derived", "m4", List(("p4", NonFuzzyType(10))))

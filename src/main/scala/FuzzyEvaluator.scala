@@ -257,6 +257,7 @@ object FuzzyEvaluator:
       case Assign(FuzzyVar(name: String), expr) =>
         val evaluatedExpr = eval(expr, env, root)
         env.setVariable(name, evaluatedExpr)
+//        if isFullyEvaluated(evaluatedExpr) then evaluatedExpr else expr
         evaluatedExpr
 
       case Scope(s, e) =>
@@ -299,9 +300,9 @@ object FuzzyEvaluator:
         classDef
 
       // Handle CreateInstance to create a class instance
-      case CreateInstance(className) =>
-        val instance = env.createInstance(className)
-        FuzzyVal(instance.hashCode().toDouble) // Representing instance as a value (hash code)
+      case CreateInstance(className, instanceName) =>
+        val instance = env.createInstance(className, instanceName)
+        CreateInstance(className, instanceName)
 
       case InvokeMethod(instanceName, methodName, args) =>
         // Evaluate arguments as much as possible
@@ -341,7 +342,7 @@ object FuzzyEvaluator:
                   evaluatedBody.last
                 } else {
                   // Return the list of partially evaluated expressions
-                  PartiallyEvaluatedMethod(evaluatedBody)
+                  PartiallyEvaluatedMethod(evaluatedBody, methodEnv)
                 }
               case None =>
                 // Method not found, return partially evaluated InvokeMethod
@@ -465,5 +466,15 @@ object FuzzyEvaluator:
           case nonFuzzyValue => nonFuzzyValue // Non-fuzzy values remain as they are
         }
         NonFuzzyType(fun.apply(args))
+
+      case PartiallyEvaluatedMethod(exprs, methodEnv) =>
+        val evaluatedExprs = exprs.map(e => eval(e, env, root))
+        if (evaluatedExprs.forall(isFullyEvaluated)) {
+//          return last fully evaluated expression
+          evaluatedExprs.last
+        } else {
+          // Return partially evaluated method
+          PartiallyEvaluatedMethod(evaluatedExprs, methodEnv)
+        }
 
       case _ => throw new Exception("Invalid Fuzzy Expression")

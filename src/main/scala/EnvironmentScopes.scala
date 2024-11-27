@@ -32,10 +32,10 @@ object EnvironmentScopes:
       classes(classDef.name) = classDef
 
     // Method to create a new instance of a class
-    def createInstance(className: String): ClassInstance =
+    def createInstance(className: String, instanceName: String): ClassInstance =
       val classDef = classes.getOrElse(className, throw new Exception(s"Class $className not defined"))
       val instance: ClassInstance = ClassInstance(classDef, mutable.Map.empty)
-      instances(className) = instance
+      instances(instanceName) = instance
       instance
 
     // Method to create a new child environment with an optional name
