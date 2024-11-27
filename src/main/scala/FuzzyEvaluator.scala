@@ -276,7 +276,9 @@ object FuzzyEvaluator:
       case LogicGate(gateName) =>
         val lgScope = root.findScope(gateName).getOrElse(throw new Exception(s"Scope $gateName not found"))
         env.lookup(gateName) match
-          case Some(expr) => eval(expr, lgScope, root)
+          case Some(expr) =>
+            println(expr)
+            eval(expr, lgScope, root)
           case _ => throw new Exception(s"Logic gate $gateName not defined")
 
       // Handle TestGate to evaluate a gate with specific inputs

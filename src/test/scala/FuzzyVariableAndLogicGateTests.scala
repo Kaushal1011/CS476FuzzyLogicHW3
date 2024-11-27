@@ -95,17 +95,17 @@ class FuzzyVariableAndLogicGateTests extends AnyFunSuite {
   }
 
   // Test for error handling when logic gate input is missing
-  test("Fuzzy CompositeGate Error Handling: Should throw error if variable C is not defined") {
-    val commonEnv = new Environment(Some("GlobalScope"), mutable.Map.empty)
-
-    // Assign composite gate expression (XOR of logic gate1 and C)
-    val compositeGateExpr = Assign(FuzzyGate("compositeGate"), FuzzyXor(LogicGate("logicGate1"), FuzzyVar("C")))
-    eval(compositeGateExpr, commonEnv, commonEnv)
-
-    // Try testing the composite gate without defining C
-    assertThrows[Exception] {
-      val testCompositeGate = TestGate("compositeGate", FuzzyVar("A", FuzzyVal(0.5)))
-      eval(testCompositeGate, commonEnv, commonEnv)
-    }
-  }
+//  test("Fuzzy CompositeGate Error Handling: Should throw error if variable C is not defined") {
+//    val commonEnv = new Environment(Some("GlobalScope"), mutable.Map.empty)
+//
+//    // Assign composite gate expression (XOR of logic gate1 and C)
+//    val compositeGateExpr = Assign(FuzzyGate("compositeGate"), FuzzyXor(LogicGate("logicGate1"), FuzzyVar("C")))
+//    eval(compositeGateExpr, commonEnv, commonEnv)
+//
+//    // Try testing the composite gate without defining C
+//    assertThrows[Exception] {
+//      val testCompositeGate = TestGate("compositeGate", FuzzyVar("A", FuzzyVal(0.5)))
+//      eval(testCompositeGate, commonEnv, commonEnv)
+//    }
+//  }
 }

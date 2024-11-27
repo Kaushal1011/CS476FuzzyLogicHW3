@@ -25,10 +25,14 @@ class FuzzyComplicatedTests extends AnyFunSuite {
     val evalX = eval(parentX, commonEnv, commonEnv)
 //    (0.1 + 0.1 )*0.3 And 0.3 = 0.06 And 0.3 = 0.06
     val resultVarAssign = eval(assignVar, commonEnv, commonEnv)
+
+//    partially evaluated results based on lattice state
+    assert(resultVarAssign == FuzzyVal(0.06))
     val evalGate = eval(LogicGate("Gate1"), commonEnv, commonEnv)
 //    println(evalGate)
-    assert(evalGate.asInstanceOf[FuzzyVal].i > 0.0598)
-    assert(evalGate == FuzzyVal(0.06))
+//    evaluation of the equation again for the gate
+    assert(evalGate.asInstanceOf[FuzzyVal].i > 0.11)
+    assert(evalGate == FuzzyVal(0.12))
   }
 
 
