@@ -307,8 +307,8 @@ object FuzzyEvaluator:
       case InvokeMethod(instanceName, methodName, args) =>
         // Evaluate arguments as much as possible
         val evaluatedArgs = args.map { case (argName, argExpr) => (argName, eval(argExpr, env, root)) }
-
-        env.instances.get(instanceName) match
+//        println(env.instances)
+        root.instances.get(instanceName) match
           case Some(instance) =>
             val classDef = instance.classDef
 
